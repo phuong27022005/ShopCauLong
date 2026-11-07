@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+.field { @apply mt-1 block w-full rounded border border-slate-300 bg-white p-2; }
+button { @apply disabled:opacity-45; }
+th { @apply p-2 text-left; }
