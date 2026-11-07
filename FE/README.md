@@ -7,10 +7,10 @@ FE mặc định gửi yêu cầu đến `/api`. Vite proxy đường dẫn này
 để dùng một địa chỉ khác. Khi triển khai, cấu hình máy chủ để hỗ trợ
 các đường dẫn React Router và proxy `/api` nếu chạy cùng origin.
 
-## Hợp đồng xác thực tạm thời
+## Xác thực
 
-BE hiện có schema và chưa có các endpoint xác thực. Bộ test MSW dùng
-hợp đồng dưới đây. Các phản hồi JSON có dạng `{ success, data, message }`.
+BE đã triển khai các endpoint dưới đây. Các phản hồi JSON có dạng
+`{ success, data, message }`. Xem `../BE/AUTH.md` để cấu hình và cập nhật database.
 
 | Endpoint | Dữ liệu gửi | Dữ liệu nhận khi thành công |
 | --- | --- | --- |
@@ -25,8 +25,7 @@ trong localStorage để khôi phục phiên qua `/me`. API khác origin cần
 cấu hình CORS có credentials và thuộc tính cookie phù hợp. API phải tự
 xác thực và phân quyền cho các endpoint được bảo vệ.
 
-Quy tắc đăng ký tạm thời: họ tên 1–150 ký tự, email hợp lệ tối đa 254
+Quy tắc đăng ký: họ tên 1–150 ký tự, email hợp lệ tối đa 254
 ký tự, mật khẩu 8–128 ký tự có chữ thường, chữ hoa, số và ký tự đặc
 biệt. Xác nhận mật khẩu chỉ dùng phía FE. Đăng nhập yêu cầu email hợp
-lệ và mật khẩu không rỗng. Đối chiếu lại các quy tắc với DTO/validator
-khi BE xác thực được triển khai.
+lệ và mật khẩu không rỗng, tối đa 128 ký tự.

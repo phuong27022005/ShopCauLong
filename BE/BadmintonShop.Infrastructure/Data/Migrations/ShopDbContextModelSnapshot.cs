@@ -753,6 +753,35 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("BadmintonShop.Core.Entities.RefreshSession", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshSessions");
+                });
+
             modelBuilder.Entity("BadmintonShop.Core.Entities.Review", b =>
                 {
                     b.Property<int>("Id")
@@ -935,6 +964,15 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                     b.Navigation("Brand");
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("BadmintonShop.Core.Entities.RefreshSession", b =>
+                {
+                    b.HasOne("BadmintonShop.Core.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("BadmintonShop.Core.Entities.Review", b =>

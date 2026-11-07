@@ -5,6 +5,7 @@ namespace BadmintonShop.Infrastructure.Data;
 
 public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options) : DbContext(options)
 {
+    public DbSet<RefreshSession> RefreshSessions => Set<RefreshSession>();
     public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<Coupon> Coupons => Set<Coupon>();
@@ -48,6 +49,12 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options) : DbC
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<RefreshSession>(e =>
+        {
+            e.Property(x => x.TokenHash).HasMaxLength(64);
+            e.HasIndex(x => x.TokenHash).IsUnique();
+            e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
         modelBuilder.Entity<User>(e =>
         {
             e.Property(x => x.FullName).HasMaxLength(150);
