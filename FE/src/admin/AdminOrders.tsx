@@ -9,10 +9,11 @@ import { formatVND } from '../catalog/formatVND'
 import { Pagination } from '../catalog/components/Pagination'
 import { useApiResource } from '../shared/useApiResource'
 import { ResourceState } from '../shared/ResourceState'
+import { OrderHistory } from '../orders/OrderHistory'
 
 export function nextStatuses(order: Order) {
   const next: Record<string, string[]> = { Pending: ['Confirmed', 'Cancelled'], Confirmed: ['Shipping', 'Cancelled'], Shipping: ['Completed'] }
-  return (next[order.status] ?? []).filter(x => x !== 'Cancelled' || order.paymentMethod !== 'VNPAY' || order.paymentStatus !== 'Paid')
+  return (next[order.status] ?? []).filter(x => (x !== 'Cancelled' || order.paymentMethod !== 'VNPAY' || order.paymentStatus !== 'Paid') && (x !== 'Shipping' && x !== 'Completed' || order.paymentMethod !== 'VNPAY' || order.paymentStatus === 'Paid'))
 }
 function Transition({ order, saved }: { order: Order; saved: () => void }) {
   const { api } = useAuth()
@@ -37,6 +38,7 @@ function Transition({ order, saved }: { order: Order; saved: () => void }) {
     {error && <p role="alert">{error}</p>}</div>
 }
 export function AdminOrders() {
+  const [historyId, setHistoryId] = useState<number | null>(null)
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
   const result = useApiResource<OrderPage>(`/admin/orders?page=${page}&pageSize=12${status ? '&status=' + status : ''}`)
@@ -49,9 +51,10 @@ export function AdminOrders() {
       {!result.data.items.length ? <p>Chưa có đơn hàng.</p> : <div className="overflow-x-auto"><table className="w-full"><thead><tr><th>Mã đơn</th><th>Tổng tiền</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>
         {result.data.items.map(order => <tr key={order.id} className="border-b"><td className="p-3">{order.code}<p>{order.fullName} · {order.phone}</p></td>
           <td>{formatVND(order.totalAmount)}</td><td><OrderStatus status={order.status} /><PaymentBadge status={order.paymentStatus} /></td>
-          <td className="p-3"><Transition key={order.status} order={order} saved={result.reload} /></td></tr>)}
+          <td className="p-3"><Transition key={order.status} order={order} saved={result.reload} /><button onClick={() => setHistoryId(order.id)} className="mt-2 underline">Xem lịch sử</button></td></tr>)}
       </tbody></table></div>}
       <Pagination label="Phân trang đơn hàng" page={page} totalPages={result.data.totalPages} onChange={setPage} />
+      {historyId !== null && <div><button className="my-3 underline" onClick={() => setHistoryId(null)}>Đóng lịch sử</button><OrderHistory key={historyId + JSON.stringify(result.data.items)} id={historyId} admin /></div>}
     </>}
   </>
 }

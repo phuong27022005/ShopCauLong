@@ -8,8 +8,10 @@ import type { ApiResponse } from '../auth/types'
 import type { ProductDetail } from '../catalog/types'
 import { useApiResource } from '../shared/useApiResource'
 import { ResourceState } from '../shared/ResourceState'
+import { ProductGalleryEditor } from './ProductGalleryEditor'
 
 const schema = z.object({
+  skillLevel: z.string().max(100),
   name: z.string().trim().min(1, 'Tên sản phẩm là bắt buộc.').max(200),
   description: z.string().max(4000),
   price: z.number().positive('Giá phải lớn hơn 0.'),
@@ -32,6 +34,7 @@ export function ProductForm({ product, saved, close }: { product?: ProductDetail
   const [error, setError] = useState('')
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Input>({
     resolver: zodResolver(schema), defaultValues: {
+      skillLevel: product?.skillLevel ?? '',
       name: product?.name ?? '', description: product?.description ?? '', price: product?.price ?? 0,
       discountPrice: product?.discountPrice ?? null, stock: product?.stock ?? 0, brandId: product?.brandId ?? 0,
       categoryId: product?.categoryId ?? 0, weight: (product?.weight ?? '4U') as Input['weight'],
@@ -83,11 +86,14 @@ export function ProductForm({ product, saved, close }: { product?: ProductDetail
       <label>Trọng lượng<select {...register('weight')} className="field">{['2U', '3U', '4U', '5U', 'F'].map(x => <option key={x}>{x}</option>)}</select></label>
       <label>Độ cứng<input {...register('stiffness')} className="field" /></label>
       <label>Điểm cân bằng<input {...register('balancePoint')} className="field" /></label>
+      <label>Trình độ phù hợp<select {...register('skillLevel')} className="field"><option value="">Chưa cập nhật</option>{['Người mới', 'Trung cấp', 'Nâng cao', 'Mọi trình độ'].map(x => <option key={x}>{x}</option>)}</select></label>
     </div>
     <label className="block">Mô tả<textarea {...register('description')} className="field" /></label>
     <label className="block"><input type="checkbox" {...register('isActive')} /> Đang bán</label>
     <label className="block">Ảnh sản phẩm<input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={e => selectFile(e.target.files?.[0])} className="field" /></label>
     {(preview || product?.imageUrl) && <img src={preview || product?.imageUrl || ''} alt="Xem trước ảnh sản phẩm" className="h-40 object-contain" />}
+    {product && <ProductGalleryEditor id={product.id} />}
+    {!product && <p className="text-sm text-slate-600">Sau khi tạo sản phẩm, mở Sửa để quản lý thư viện nhiều ảnh.</p>}
     {Object.entries(errors).map(([key, value]) => <p key={key} role="alert">{value.message}</p>)}
     {fileError && <p role="alert">{fileError}</p>}{error && <p role="alert">{error}</p>}
     <button disabled={isSubmitting || Boolean(fileError) || !brands.data || !categories.data} className="rounded bg-teal-800 px-4 py-2 text-white">{isSubmitting ? 'Đang lưu…' : 'Lưu sản phẩm'}</button>

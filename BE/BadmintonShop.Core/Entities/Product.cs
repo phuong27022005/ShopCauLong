@@ -19,6 +19,8 @@ public sealed class Product
     public string Stiffness { get; set; } = string.Empty;
     public string BalancePoint { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
+    public List<string> AdditionalImageUrls { get; set; } = [];
+    public string? SkillLevel { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
 }

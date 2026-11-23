@@ -13,6 +13,8 @@ import { orderDate } from '../orders/types'
 import type { Order } from '../orders/types'
 import { PaymentBadge } from '../payments/PaymentBadge'
 import { RetryPayment } from '../payments/RetryPayment'
+import { OrderHistory } from '../orders/OrderHistory'
+import { ShopIllustration } from '../components/ShopIllustration'
 
 export function OrderDetailPage({ success = false }: { success?: boolean }) {
   const { id } = useParams()
@@ -45,9 +47,12 @@ export function OrderDetailPage({ success = false }: { success?: boolean }) {
   }
   return <section className="space-y-5">
     <h1 className="text-3xl font-bold">{success ? 'Đặt hàng thành công' : 'Chi tiết đơn hàng'}</h1>
+    {success && <ShopIllustration success />}
     <p className="font-bold">{order.code} · {orderDate(order.createdAt)}</p>
     <OrderStatus status={order.status} /><OrderTimeline status={order.status} />
     <PaymentBadge status={order.paymentStatus} />
+    <OrderHistory key={order.id + order.status + order.paymentStatus} id={order.id} />
+    {order.paymentMethod === 'VNPAY' && order.paymentStatus !== 'Paid' && order.status !== 'Cancelled' && order.paymentExpiredAt && <p className="rounded-lg bg-amber-50 p-3 text-amber-950">Hàng được giữ đến {orderDate(order.paymentExpiredAt)}. Nếu chưa thanh toán khi hết hạn, đơn sẽ tự hủy và hàng được hoàn lại kho.</p>}
     {typeof location.state?.paymentError === 'string' && <p role="alert" className="text-red-800">{location.state.paymentError}</p>}
     <RetryPayment key={order.id} order={order} />
     <section className="rounded border bg-white p-4">

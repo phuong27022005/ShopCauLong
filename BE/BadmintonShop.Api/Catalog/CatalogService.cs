@@ -40,6 +40,7 @@ public sealed class CatalogService(ICatalogRepository repository, IMapper mapper
         var regenerateSlug = id is null || product.Name != name;
 
         product.Name = name;
+        product.SkillLevel = input.SkillLevel?.Trim();
         product.Description = input.Description;
         product.Price = input.Price;
         product.DiscountPrice = input.DiscountPrice;

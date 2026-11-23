@@ -22,6 +22,40 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("BadmintonShop.Core.Entities.AccountActionToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AccountActionTokens");
+                });
+
             modelBuilder.Entity("BadmintonShop.Core.Entities.Brand", b =>
                 {
                     b.Property<int>("Id")
@@ -225,6 +259,24 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("BadmintonShop.Core.Entities.Favorite", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("UserId", "ProductId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("Favorites");
+                });
+
             modelBuilder.Entity("BadmintonShop.Core.Entities.Order", b =>
                 {
                     b.Property<int>("Id")
@@ -321,6 +373,49 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                     b.ToTable("Orders");
                 });
 
+            modelBuilder.Entity("BadmintonShop.Core.Entities.OrderHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ActorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ActorName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Event")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("FromValue")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ToValue")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId", "CreatedAt");
+
+                    b.ToTable("OrderHistories");
+                });
+
             modelBuilder.Entity("BadmintonShop.Core.Entities.OrderItem", b =>
                 {
                     b.Property<int>("Id")
@@ -354,6 +449,47 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("OrderItems");
+                });
+
+            modelBuilder.Entity("BadmintonShop.Core.Entities.OutgoingEmail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("NextAttemptAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Recipient")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("nvarchar(254)");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SentAt", "NextAttemptAt");
+
+                    b.ToTable("OutgoingEmails");
                 });
 
             modelBuilder.Entity("BadmintonShop.Core.Entities.PaymentTransaction", b =>
@@ -408,6 +544,10 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AdditionalImageUrls")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("BalancePoint")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -457,6 +597,10 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         .HasMaxLength(400)
                         .HasColumnType("nvarchar(400)");
 
+                    b.Property<string>("SkillLevel")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(220)
@@ -499,6 +643,7 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 1,
+                            AdditionalImageUrls = "[]",
                             BalancePoint = "Nặng đầu",
                             BrandId = 1,
                             CategoryId = 1,
@@ -516,6 +661,7 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 2,
+                            AdditionalImageUrls = "[]",
                             BalancePoint = "Cân bằng",
                             BrandId = 1,
                             CategoryId = 2,
@@ -533,6 +679,7 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 3,
+                            AdditionalImageUrls = "[]",
                             BalancePoint = "Nhẹ đầu",
                             BrandId = 1,
                             CategoryId = 3,
@@ -550,6 +697,7 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 4,
+                            AdditionalImageUrls = "[]",
                             BalancePoint = "Nặng đầu",
                             BrandId = 2,
                             CategoryId = 1,
@@ -567,6 +715,7 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 5,
+                            AdditionalImageUrls = "[]",
                             BalancePoint = "Cân bằng",
                             BrandId = 2,
                             CategoryId = 2,
@@ -584,6 +733,7 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 6,
+                            AdditionalImageUrls = "[]",
                             BalancePoint = "Nhẹ đầu",
                             BrandId = 2,
                             CategoryId = 3,
@@ -601,6 +751,7 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 7,
+                            AdditionalImageUrls = "[]",
                             BalancePoint = "Nặng đầu",
                             BrandId = 3,
                             CategoryId = 1,
@@ -618,6 +769,7 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 8,
+                            AdditionalImageUrls = "[]",
                             BalancePoint = "Cân bằng",
                             BrandId = 3,
                             CategoryId = 2,
@@ -635,6 +787,7 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 9,
+                            AdditionalImageUrls = "[]",
                             BalancePoint = "Nhẹ đầu",
                             BrandId = 3,
                             CategoryId = 3,
@@ -652,6 +805,7 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 10,
+                            AdditionalImageUrls = "[]",
                             BalancePoint = "Nặng đầu",
                             BrandId = 4,
                             CategoryId = 1,
@@ -669,6 +823,7 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 11,
+                            AdditionalImageUrls = "[]",
                             BalancePoint = "Cân bằng",
                             BrandId = 4,
                             CategoryId = 2,
@@ -686,6 +841,7 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 12,
+                            AdditionalImageUrls = "[]",
                             BalancePoint = "Nhẹ đầu",
                             BrandId = 4,
                             CategoryId = 3,
@@ -703,6 +859,7 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 13,
+                            AdditionalImageUrls = "[]",
                             BalancePoint = "Nặng đầu",
                             BrandId = 5,
                             CategoryId = 1,
@@ -720,6 +877,7 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 14,
+                            AdditionalImageUrls = "[]",
                             BalancePoint = "Cân bằng",
                             BrandId = 5,
                             CategoryId = 2,
@@ -737,6 +895,7 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 15,
+                            AdditionalImageUrls = "[]",
                             BalancePoint = "Nhẹ đầu",
                             BrandId = 5,
                             CategoryId = 3,
@@ -836,6 +995,9 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         .HasMaxLength(254)
                         .HasColumnType("nvarchar(254)");
 
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -855,6 +1017,10 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
 
+                    b.Property<int>("TokenVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -870,19 +1036,34 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                             Id = 1,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@example.invalid",
+                            EmailConfirmed = false,
                             FullName = "Quản trị viên",
                             PasswordHash = "AQAAAAIAAYagAAAAEEiJTaXqhna0OxReDMS6hXn3yV30Aq9inJc+rclx0BLuw6dff47B7ET+/8/uoOiIbw==",
-                            Role = "Admin"
+                            Role = "Admin",
+                            TokenVersion = 0
                         },
                         new
                         {
                             Id = 2,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "customer@example.invalid",
+                            EmailConfirmed = false,
                             FullName = "Khách hàng mẫu",
                             PasswordHash = "AQAAAAIAAYagAAAAEBdOYCUaEVXi0TR1I7h6FS7oMycFL/ns8Lr7YHmwAq5BV328UyYnkMgJEPvw/9isoQ==",
-                            Role = "Customer"
+                            Role = "Customer",
+                            TokenVersion = 0
                         });
+                });
+
+            modelBuilder.Entity("BadmintonShop.Core.Entities.AccountActionToken", b =>
+                {
+                    b.HasOne("BadmintonShop.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("BadmintonShop.Core.Entities.Cart", b =>
@@ -909,6 +1090,23 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("BadmintonShop.Core.Entities.Favorite", b =>
+                {
+                    b.HasOne("BadmintonShop.Core.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BadmintonShop.Core.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("BadmintonShop.Core.Entities.Order", b =>
                 {
                     b.HasOne("BadmintonShop.Core.Entities.Coupon", null)
@@ -921,6 +1119,17 @@ namespace BadmintonShop.Infrastructure.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("BadmintonShop.Core.Entities.OrderHistory", b =>
+                {
+                    b.HasOne("BadmintonShop.Core.Entities.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("BadmintonShop.Core.Entities.OrderItem", b =>

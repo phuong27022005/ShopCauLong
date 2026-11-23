@@ -16,6 +16,8 @@ export interface ProductSummary {
 }
 
 export interface ProductDetail extends Omit<ProductSummary, 'brandName'> {
+  skillLevel?: string | null
+  additionalImageUrls?: string[]
   description: string | null
   brandId: number
   categoryId: number

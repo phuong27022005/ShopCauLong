@@ -16,4 +16,5 @@ TestResults/
 **/*.key
 **/*.log
 **/TestResults/
+**/.local-mail/
 

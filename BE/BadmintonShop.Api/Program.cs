@@ -1,4 +1,6 @@
 using System.Text;
+using System.Security.Claims;
+using BadmintonShop.Api.Auth;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using BadmintonShop.Api.Catalog;
@@ -29,6 +31,9 @@ builder.Services.AddDbContext<ShopDbContext>(options => options.UseSqlServer(con
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
 builder.Services.AddScoped<CatalogService>();
+builder.Services.AddScoped<AccountActions>();
+builder.Services.AddScoped<EmailDelivery>();
+builder.Services.AddHostedService<EmailWorker>();
 builder.Services.AddScoped<IStatsRepository, StatsRepository>();
 builder.Services.AddScoped<BadmintonShop.Api.Stats.StatsService>();
 builder.Services.AddScoped<IEngagementRepository, EngagementRepository>();
@@ -69,6 +74,22 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         throw new InvalidOperationException("Jwt:SigningKey phải có ít nhất 32 byte.");
 
     options.MapInboundClaims = false;
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = async context =>
+        {
+            if (!int.TryParse(context.Principal?.FindFirstValue("sub"), out var id)) { context.Fail("Invalid user."); return; }
+            var db = context.HttpContext.RequestServices.GetRequiredService<ShopDbContext>();
+            var user = await db.Users.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, context.HttpContext.RequestAborted);
+            var versionClaim = context.Principal?.FindFirstValue("ver");
+            // Existing signed tokens issued before versioning are version zero.
+            if (!int.TryParse(versionClaim ?? "0", out var version) || version != (user?.TokenVersion ?? 0)
+                || versionClaim is not null && user is null)
+            { context.Fail("Session revoked."); return; }
+            db.AuditActorId = id;
+            db.AuditActorName = user?.FullName ?? "Người dùng";
+        }
+    };
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,

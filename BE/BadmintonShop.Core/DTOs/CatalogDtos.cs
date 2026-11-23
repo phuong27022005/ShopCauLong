@@ -10,7 +10,11 @@ public sealed record ProductListDto(
 public sealed record ProductDetailDto(
     int Id, string Name, string Slug, string? Description, decimal Price, decimal? DiscountPrice,
     int Stock, int BrandId, int CategoryId, BrandDto Brand, CategoryDto Category, string Weight,
-    string Stiffness, string BalancePoint, string? ImageUrl, bool IsActive, DateTime CreatedAt);
+    string Stiffness, string BalancePoint, string? ImageUrl, bool IsActive, DateTime CreatedAt)
+{
+    public IReadOnlyList<string> AdditionalImageUrls { get; init; } = [];
+    public string? SkillLevel { get; init; }
+}
 
 public sealed record PageDto<T>(IReadOnlyList<T> Items, int Page, int PageSize, int TotalItems)
 {
@@ -39,6 +43,7 @@ public sealed class ProductPageQuery
 
 public sealed class SaveProductRequest
 {
+    public string? SkillLevel { get; init; }
     public string Name { get; init; } = "";
     public string? Description { get; init; }
     public decimal Price { get; init; }

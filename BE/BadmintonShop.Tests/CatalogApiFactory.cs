@@ -37,7 +37,7 @@ internal sealed class CatalogApiFactory : WebApplicationFactory<Program>
     {
         builder.UseWebRoot(WebRoot);
         builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(
-            new Dictionary<string, string?> { ["Jwt:SigningKey"] = SigningKey, ["Vnpay:ExpirationJobEnabled"] = "false" }.Concat(ConfigurationOverrides)));
+            new Dictionary<string, string?> { ["Jwt:SigningKey"] = SigningKey, ["Vnpay:ExpirationJobEnabled"] = "false", ["Email:WorkerEnabled"] = "false" }.Concat(ConfigurationOverrides)));
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<ShopDbContext>();

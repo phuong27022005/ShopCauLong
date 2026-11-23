@@ -5,6 +5,12 @@ namespace BadmintonShop.Infrastructure.Data;
 
 public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options) : DbContext(options)
 {
+    public int? AuditActorId { get; set; }
+    public string AuditActorName { get; set; } = "Hệ thống";
+    public DbSet<AccountActionToken> AccountActionTokens => Set<AccountActionToken>();
+    public DbSet<OutgoingEmail> OutgoingEmails => Set<OutgoingEmail>();
+    public DbSet<Favorite> Favorites => Set<Favorite>();
+    public DbSet<OrderHistory> OrderHistories => Set<OrderHistory>();
     public DbSet<RefreshSession> RefreshSessions => Set<RefreshSession>();
     public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
     public DbSet<Review> Reviews => Set<Review>();
@@ -20,6 +26,7 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options) : DbC
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        CaptureOrderHistory();
         foreach (var entry in ChangeTracker.Entries<Product>().Where(x => x.State is EntityState.Added or EntityState.Modified))
             entry.Entity.SearchName = SearchText.Normalize(entry.Entity.Name);
         foreach (var entry in ChangeTracker.Entries<Coupon>().Where(x => x.State is EntityState.Added or EntityState.Modified))
@@ -30,12 +37,29 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options) : DbC
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
+        CaptureOrderHistory();
         foreach (var entry in ChangeTracker.Entries<Product>().Where(x => x.State is EntityState.Added or EntityState.Modified))
             entry.Entity.SearchName = SearchText.Normalize(entry.Entity.Name);
         foreach (var entry in ChangeTracker.Entries<Coupon>().Where(x => x.State is EntityState.Added or EntityState.Modified))
             entry.Entity.Code = entry.Entity.Code.Trim().ToUpperInvariant();
         PrepareVersions();
         return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    private void CaptureOrderHistory()
+    {
+        foreach (var entry in ChangeTracker.Entries<Order>().ToList())
+        {
+            foreach (var property in new[] { nameof(Order.Status), nameof(Order.PaymentStatus) })
+            {
+                var value = entry.Property<string>(property);
+                if (entry.State != EntityState.Added && !(entry.State == EntityState.Modified && value.IsModified && value.OriginalValue != value.CurrentValue)) continue;
+                if (entry.State == EntityState.Added && property == nameof(Order.PaymentStatus)) continue;
+                OrderHistories.Add(new OrderHistory { Order = entry.Entity, ActorId = AuditActorId,
+                    ActorName = AuditActorName, Event = property, FromValue = entry.State == EntityState.Added ? null : value.OriginalValue,
+                    ToValue = value.CurrentValue, CreatedAt = DateTime.UtcNow });
+            }
+        }
     }
 
     private void PrepareVersions()
@@ -49,6 +73,36 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options) : DbC
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<AccountActionToken>(e =>
+        {
+            e.Property(x => x.Purpose).HasMaxLength(20);
+            e.Property(x => x.TokenHash).HasMaxLength(64);
+            e.HasIndex(x => x.TokenHash).IsUnique();
+            e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId);
+        });
+        modelBuilder.Entity<OutgoingEmail>(e =>
+        {
+            e.Property(x => x.Recipient).HasMaxLength(254);
+            e.Property(x => x.Subject).HasMaxLength(200);
+            e.HasIndex(x => new { x.SentAt, x.NextAttemptAt });
+        });
+        modelBuilder.Entity<Favorite>(e =>
+        {
+            e.HasKey(x => new { x.UserId, x.ProductId });
+            e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId);
+            e.HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId);
+        });
+        modelBuilder.Entity<OrderHistory>(e =>
+        {
+            e.Property(x => x.ActorName).HasMaxLength(150);
+            e.Property(x => x.Event).HasMaxLength(30);
+            e.Property(x => x.FromValue).HasMaxLength(30);
+            e.Property(x => x.ToValue).HasMaxLength(30);
+            e.HasIndex(x => new { x.OrderId, x.CreatedAt });
+            e.HasOne(x => x.Order).WithMany().HasForeignKey(x => x.OrderId);
+        });
+        modelBuilder.Entity<Product>().Property(x => x.SkillLevel).HasMaxLength(100);
+        modelBuilder.Entity<User>().Property(x => x.TokenVersion).IsConcurrencyToken();
         modelBuilder.Entity<RefreshSession>(e =>
         {
             e.Property(x => x.TokenHash).HasMaxLength(64);

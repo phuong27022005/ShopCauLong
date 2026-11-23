@@ -18,13 +18,13 @@ namespace BadmintonShop.Api.Controllers;
 [ApiController]
 [Route("api/auth")]
 [EnableRateLimiting("auth")]
-public sealed class AuthController(ShopDbContext db, IConfiguration configuration, TimeProvider clock) : ControllerBase
+public sealed class AuthController(ShopDbContext db, IConfiguration configuration, TimeProvider clock, AccountActions actions) : ControllerBase
 {
     private const string CookieName = "badminton.refresh";
     private readonly PasswordHasher<User> hasher = new();
     private static readonly User DummyUser = new();
     private static readonly string DummyHash = new PasswordHasher<User>().HashPassword(DummyUser, "dummy-password");
-    private static object Profile(User user) => new { user.Id, user.FullName, user.Email, user.Role };
+    private static object Profile(User user) => new { user.Id, user.FullName, user.Email, user.Role, user.EmailConfirmed };
     private static string Hash(string token) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
     private DateTime Now => clock.GetUtcNow().UtcDateTime;
     private CookieOptions Cookie(DateTime? expires = null) => new()
@@ -39,7 +39,7 @@ public sealed class AuthController(ShopDbContext db, IConfiguration configuratio
             throw new InvalidOperationException("Cần cấu hình Jwt:SigningKey ít nhất 32 byte.");
         return new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(
             configuration["Jwt:Issuer"] ?? "BadmintonShop", configuration["Jwt:Audience"] ?? "BadmintonShop.Web",
-            [new Claim("sub", user.Id.ToString()), new Claim("role", user.Role), new Claim("jti", Guid.NewGuid().ToString())],
+            [new Claim("sub", user.Id.ToString()), new Claim("role", user.Role), new Claim("ver", user.TokenVersion.ToString()), new Claim("jti", Guid.NewGuid().ToString())],
             Now, Now.AddMinutes(15), new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)), SecurityAlgorithms.HmacSha256)));
     }
 
@@ -52,6 +52,7 @@ public sealed class AuthController(ShopDbContext db, IConfiguration configuratio
         var user = new User { FullName = request.FullName.Trim(), Email = email, Role = "Customer", CreatedAt = Now };
         user.PasswordHash = hasher.HashPassword(user, request.Password);
         db.Users.Add(user);
+        actions.Queue(user, "verify");
         try { await db.SaveChangesAsync(ct); }
         catch (DbUpdateException)
         {
@@ -61,6 +62,35 @@ public sealed class AuthController(ShopDbContext db, IConfiguration configuratio
             throw;
         }
         return StatusCode(201, ApiResponse.Ok(message: "Đăng ký thành công. Vui lòng đăng nhập."));
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(EmailRequest input, CancellationToken ct)
+    {
+        await actions.RequestAsync(input.Email, "reset", ct);
+        return Ok(ApiResponse.Ok(message: "Nếu email đã đăng ký, bạn sẽ nhận được hướng dẫn. Vui lòng kiểm tra hộp thư."));
+    }
+
+    [HttpPost("resend-verification")]
+    public async Task<IActionResult> ResendVerification(EmailRequest input, CancellationToken ct)
+    {
+        await actions.RequestAsync(input.Email, "verify", ct);
+        return Ok(ApiResponse.Ok(message: "Nếu tài khoản cần xác minh, liên kết sẽ được gửi qua email. Vui lòng chờ ít nhất một phút giữa các lần gửi."));
+    }
+
+    [HttpPost("verify-email")]
+    public async Task<IActionResult> VerifyEmail(ConfirmEmailRequest input, CancellationToken ct)
+    {
+        await actions.ConsumeAsync(input.Token, "verify", null, ct);
+        return Ok(ApiResponse.Ok(message: "Đã xác minh email."));
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest input, CancellationToken ct)
+    {
+        await actions.ConsumeAsync(input.Token, "reset", input.Password, ct);
+        Response.Cookies.Delete(CookieName, Cookie());
+        return Ok(ApiResponse.Ok(message: "Đã đổi mật khẩu. Vui lòng đăng nhập lại trên các thiết bị."));
     }
 
     [HttpPost("login")]

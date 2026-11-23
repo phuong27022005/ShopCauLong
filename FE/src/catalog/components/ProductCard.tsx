@@ -3,6 +3,7 @@ import { AddToCartButton } from '../LocalCart'
 import type { ProductSummary } from '../types'
 import { CatalogImage } from './CatalogImage'
 import { PriceTag } from './PriceTag'
+import { ProductTools } from '../../shopping/ShoppingTools'
 
 export function ProductCard({ product }: { product: ProductSummary }) {
   return (
@@ -17,6 +18,7 @@ export function ProductCard({ product }: { product: ProductSummary }) {
       </Link>
       <div className="px-4 pb-4">
         <AddToCartButton product={{ ...product, isActive: true }} />
+        <ProductTools id={product.id} />
       </div>
     </article>
   )

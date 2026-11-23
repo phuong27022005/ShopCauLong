@@ -29,6 +29,7 @@ public sealed class SaveProductValidator : AbstractValidator<SaveProductRequest>
 {
     public SaveProductValidator()
     {
+        RuleFor(x => x.SkillLevel).MaximumLength(100);
         RuleFor(x => x.Name).NotEmpty().WithMessage("Tên sản phẩm là bắt buộc.").MaximumLength(200);
         RuleFor(x => x.Description).MaximumLength(4000);
         RuleFor(x => x.Price).GreaterThan(0).WithMessage("Giá phải lớn hơn 0.").PrecisionScale(18, 2, true);

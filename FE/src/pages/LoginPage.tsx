@@ -44,6 +44,8 @@ export function LoginPage() {
             <AuthSubmit busy={isSubmitting} label="Đăng nhập" />
           </form>
           <p className="mt-4 text-sm">Chưa có tài khoản? <Link to="/register" className="underline">Đăng ký</Link></p>
+          <Link to="/forgot-password" className="mt-3 block text-sm underline">Quên mật khẩu?</Link>
+          {location.state?.registered && <p className="mt-3 text-sm">Vui lòng kiểm tra email để xác minh tài khoản. <Link to="/resend-verification" className="underline">Gửi lại email</Link></p>}
         </>
       )}
     </AuthCard>

@@ -61,6 +61,8 @@ public sealed class OrderService(IOrderRepository repository, BadmintonShop.Api.
                 throw CatalogException.BadRequest("Không được chuyển trạng thái đơn hàng theo luồng này.");
             if (order.PaymentMethod == "VNPAY" && status == "Cancelled" && order.PaymentStatus == "Paid")
                 throw CatalogException.BadRequest("Đơn đã thanh toán cần xử lý hoàn tiền trước khi hủy.");
+            if (order.PaymentMethod == "VNPAY" && status is "Shipping" or "Completed" && order.PaymentStatus != "Paid")
+                throw CatalogException.BadRequest("Chỉ giao hàng sau khi VNPay xác nhận đã thanh toán.");
             var lines = await repository.LinesAsync(id, ct);
             if (status == "Cancelled")
             {

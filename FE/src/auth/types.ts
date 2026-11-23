@@ -1,4 +1,5 @@
 export interface User {
+  emailConfirmed?: boolean
   id: number
   fullName: string
   email: string

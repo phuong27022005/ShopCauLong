@@ -205,6 +205,7 @@ public sealed class OrderTests : IAsyncLifetime
         (await db.Products.FindAsync(1))!.Stock.Should().Be(10);
         (await db.Orders.CountAsync()).Should().Be(0);
         (await db.OrderItems.CountAsync()).Should().Be(0);
+        (await db.OrderHistories.CountAsync()).Should().Be(0);
         (await db.CartItems.SingleAsync()).Quantity.Should().Be(2);
         (await db.Coupons.SingleAsync()).UsedCount.Should().Be(0);
     }

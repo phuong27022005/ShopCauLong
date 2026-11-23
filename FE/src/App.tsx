@@ -6,6 +6,7 @@ import { AdminProducts } from './admin/AdminProducts'
 import { AdminOrders } from './admin/AdminOrders'
 import { AdminCoupons } from './admin/AdminCoupons'
 import { AdminReviews } from './admin/AdminReviews'
+import { AdminInventory } from './admin/AdminInventory'
 import { Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './auth/AuthContext'
 import { AdminRoute, ProtectedRoute } from './auth/AuthRoutes'
@@ -21,6 +22,8 @@ import { LoginPage } from './pages/LoginPage'
 import { ProductDetailPage } from './pages/ProductDetailPage'
 import { ProductsPage } from './pages/ProductsPage'
 import { RegisterPage } from './pages/RegisterPage'
+import { AccountActionsPage, VerificationStatus } from './pages/AccountActionsPage'
+import { ShoppingProvider, ShoppingNotice, FavoritesPage, ComparePage } from './shopping/ShoppingTools'
 
 function AccountPage() {
   const { user } = useAuth()
@@ -28,6 +31,7 @@ function AccountPage() {
     <section>
       <h1 className="text-2xl font-bold">Tài khoản của tôi</h1>
       <p className="mt-2">{user?.email}</p>
+      <VerificationStatus />
     </section>
   )
 }
@@ -35,10 +39,11 @@ function AccountPage() {
 export function App() {
   return (
     <AuthProvider>
-      <CartProvider><CouponProvider>
+      <CartProvider><CouponProvider><ShoppingProvider>
         <div className="min-h-screen bg-slate-50 text-slate-900">
           <Header />
           <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
+            <ShoppingNotice />
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/products" element={<ProductsPage />} />
@@ -46,7 +51,11 @@ export function App() {
               <Route path="/cart" element={<CartPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/compare" element={<ComparePage />} />
+              {(['forgot-password', 'reset-password', 'verify-email', 'resend-verification'] as const).map(action =>
+                <Route key={action} path={'/' + action} element={<AccountActionsPage key={action} action={action} />} />)}
               <Route element={<ProtectedRoute />}>
+                <Route path="/favorites" element={<FavoritesPage />} />
                 <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/payment/result" element={<PaymentResultPage />} />
                 <Route path="/orders" element={<OrdersPage />} />
@@ -57,6 +66,7 @@ export function App() {
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<Suspense fallback={<p role="status">Đang tải dashboard…</p>}><Dashboard /></Suspense>} />
                     <Route path="products" element={<AdminProducts />} />
+                    <Route path="inventory" element={<AdminInventory />} />
                     <Route path="orders" element={<AdminOrders />} />
                     <Route path="coupons" element={<AdminCoupons />} />
                     <Route path="reviews" element={<AdminReviews />} />
@@ -68,7 +78,7 @@ export function App() {
             </Routes>
           </main>
         </div>
-      </CouponProvider></CartProvider>
+      </ShoppingProvider></CouponProvider></CartProvider>
     </AuthProvider>
   )
 }
